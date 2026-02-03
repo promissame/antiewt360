@@ -96,31 +96,40 @@ def wait_for_video_completion(driver,lesson_name, action_chains):
         play_btn.click()
     except TimeoutException:
         logging.error("找不到播放按钮")"""
-    video = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.TAG_NAME, "video"))
-    )
-    driver.execute_script('function updateVariable(){document.querySelector("video").playbackRate = 2;document.querySelector("video").muted = false;setTimeout(updateVariable, 0);};updateVariable();')
-    while True:
-        # 挂机检测部分
-        for cls in ["btn-3LStS"]:
-            elements = driver.find_elements(By.CLASS_NAME, cls)
-            if elements:
-                action_chains.click(elements[0]).perform()
-                logging.info(f"处理 {cls} 检测")
-        # 获取视频进度
-        try:
-            current_time = float(video.get_attribute("currentTime"))
-            duration = float(video.get_attribute("duration"))
-        except Exception as e:
-            logging.error("读取视频属性失败")
-            break
-        logging.info(f"视频进度: {current_time}/{duration}")
-        time.sleep(5)
-        if current_time >= duration:
-            logging.info(f"{lesson_name} | 已完成")
-            driver.close()
-            switch_to_new_window(driver)
-            break
+    try:
+        video = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.TAG_NAME, "video"))
+        )
+        driver.execute_script('function updateVariable(){document.querySelector("video").playbackRate = 2;document.querySelector("video").muted = false;setTimeout(updateVariable, 0);};updateVariable();')
+        while True:
+            # 挂机检测部分
+            for cls in ["btn-DOCWn"]:
+                elements = driver.find_elements(By.CLASS_NAME, cls)
+                if elements:
+                    action_chains.click(elements[0]).perform()
+                    logging.info(f"处理 {cls} 检测")
+            # 获取视频进度
+            try:
+                current_time = float(video.get_attribute("currentTime"))
+                duration = float(video.get_attribute("duration"))
+            except Exception as e:
+                logging.error("读取视频属性失败")
+                break
+            logging.info(f"视频进度: {current_time}/{duration}")
+            time.sleep(5)
+            if current_time >= duration:
+                logging.info(f"{lesson_name} | 已完成")
+                driver.close()
+                switch_to_new_window(driver)
+                break
+    except TimeoutException:
+        driver.close()
+        switch_to_new_window(driver)
+
+def process_FM(driver,action_chains):
+    time.sleep(10)
+    driver.close()
+    switch_to_new_window(driver)
 
 def process_lessons(driver, action_chains):
     """处理当前课程中的所有视频/学习任务"""
@@ -200,6 +209,7 @@ def main():
         i["element"] = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable(i["element"])
         )
+        time.sleep(5)
         i["element"].click()
         switch_to_new_window(driver)
         time.sleep(1)
@@ -213,15 +223,20 @@ def main():
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "btn-AoqsA"))
             )
+            button = driver.find_elements(By.CLASS_NAME, "btn-AoqsA")
             text = i.text
             #如果是导学案或者已经完成就跳过
-            if (text == "导" or i.get_attribute("data-finish")== "true" or text=="练" or text == "测一测"):
+            if (text == "导" or i.get_attribute("data-finish")== "true" or text=="练" or text == "测一测" or text == "已完成"):
                 continue
-            #点击按钮
+            time.sleep(30)
             action_chains.click(i).perform()
             switch_to_new_window(driver)
             if(text!="练"):
                 process_lessons(driver, action_chains)
+            elif(text == "去收听"):
+                process_FM(driver, action_chains);
+            elif(text == "去查看"):
+                process_FM(driver, action_chains);
             else:
                 logging.info("练习课程")
                 time.sleep(1)
